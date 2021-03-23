@@ -1,9 +1,11 @@
 ## Introduction
+lodash-go is goLang methods package, it like javascript's lodash.
 
 ### API doc reference
 [![GoDoc](https://godoc.org/github.com/ITcathyh/alloter?status.svg)](https://godoc.org/github.com/guoquanwei/lodash-go)
 
 ###Variables
+
 ```
 func Chain(input interface{}) *lodash
 
