@@ -78,8 +78,8 @@ type User struct {
 
 func main ()  {
 	// simple method
-	newUsers1 := []User{}
-	err1 := lodash.Filter(&newUsers1, []User{{Id: 1}, {Id: 2}, func(i interface{}) bool {
+	newUsers := []User{}
+	err1 := lodash.Filter(&newUsers, []User{{Id: 1}, {Id: 2}, func(i interface{}) bool {
 		return i.(User).Id > 1
 	}})
 
