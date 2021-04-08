@@ -214,6 +214,9 @@ func SortBy(output interface{}, input interface{}, iteratee func(interface{}) in
 				if Includes(ReflectIntTypes, valueKind) {
 					return reflect.ValueOf(i).Int() < reflect.ValueOf(j).Int()
 				}
+				if Includes(ReflectFloatTypes, valueKind) {
+					return reflect.ValueOf(i).Float() < reflect.ValueOf(j).Float()
+				}
 				if valueKind == `string` {
 					return reflect.ValueOf(i).String() < reflect.ValueOf(j).String()
 				}
@@ -228,6 +231,9 @@ func SortBy(output interface{}, input interface{}, iteratee func(interface{}) in
 			if order == `desc` {
 				if Includes(ReflectIntTypes, valueKind) {
 					return reflect.ValueOf(i).Int() > reflect.ValueOf(j).Int()
+				}
+				if Includes(ReflectFloatTypes, valueKind) {
+					return reflect.ValueOf(i).Float() > reflect.ValueOf(j).Float()
 				}
 				if valueKind == `string` {
 					return reflect.ValueOf(i).String() > reflect.ValueOf(j).String()
@@ -302,6 +308,17 @@ func OrderBy(output interface{}, input interface{}, iterateers []func(interface{
 							return false
 						}
 					}
+					if Includes(ReflectFloatTypes, valueKind) {
+						left := reflect.ValueOf(iResults[index]).Float()
+						right := reflect.ValueOf(jResults[index]).Float()
+						if left < right {
+							return true
+						} else if left == right {
+							continue
+						} else {
+							return false
+						}
+					}
 					if valueKind == `string` {
 						left := reflect.ValueOf(iResults[index]).String()
 						right := reflect.ValueOf(jResults[index]).String()
@@ -329,6 +346,17 @@ func OrderBy(output interface{}, input interface{}, iterateers []func(interface{
 					if Includes(ReflectIntTypes, valueKind) {
 						left := reflect.ValueOf(iResults[index]).Int()
 						right := reflect.ValueOf(jResults[index]).Int()
+						if left > right {
+							return true
+						} else if left == right {
+							continue
+						} else {
+							return false
+						}
+					}
+					if Includes(ReflectFloatTypes, valueKind) {
+						left := reflect.ValueOf(iResults[index]).Float()
+						right := reflect.ValueOf(jResults[index]).Float()
 						if left > right {
 							return true
 						} else if left == right {

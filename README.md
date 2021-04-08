@@ -9,7 +9,7 @@ lodash-go is goLang methods package, it like javascript's lodash.
 ```go
 func Chain(input interface{}) *lodash
 // init a chain
-// example: Chain([]some_struct)
+// example: Chain([]some_struct{...})
 
 func Value(output interface{}) error
 // output and bind result
