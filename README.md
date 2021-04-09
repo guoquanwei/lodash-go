@@ -22,7 +22,7 @@ func Concat(output interface{}, inputs ...interface{}) (err error)
 // example: Concat(&result, []some_struct{...}, []some_struct{...})
 
 func Difference(output interface{}, input interface{}, accessory interface{}) (err error)
-// if `input` not includes `accessory`'s element， will append to `input`.
+// if `input`'s element in `accessory`'， will delete`.
 // example: Difference(&result, []some_struct{...}, []some_struct{...})
 
 func Includes(input interface{}, checkValue interface{}) bool
