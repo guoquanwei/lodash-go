@@ -16,14 +16,26 @@ func Filter(output interface{}, input interface{}, iteratee func(interface{}) bo
 	if err != nil {
 		return err
 	}
-	result := []interface{}{}
-	for i := 0; i < inputRv.Len(); i++ {
-		if iteratee(inputRv.Index(i).Interface()) {
-			result = append(result, inputRv.Index(i).Interface())
+
+	if isChain {
+		result := []interface{}{}
+		for i := 0; i < inputRv.Len(); i++ {
+			if iteratee(inputRv.Index(i).Interface()) {
+				result = append(result, inputRv.Index(i).Interface())
+			}
 		}
+		input.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for i := 0; i < inputRv.Len(); i++ {
+			if iteratee(inputRv.Index(i).Interface()) {
+				result = reflect.Append(result, inputRv.Index(i))
+			}
+		}
+		outputSet.Set(result)
 	}
-	err = chainOutputConvert(output, input, isChain, result)
-	return err
+	return nil
 }
 
 func Includes(input interface{}, checkValue interface{}) bool {
@@ -111,12 +123,22 @@ func Map(output interface{}, input interface{}, iteratee func(interface{}) inter
 	if err != nil {
 		return err
 	}
-	result := []interface{}{}
-	for i := 0; i < inputRv.Len(); i++ {
-		result = append(result, iteratee(inputRv.Index(i).Interface()))
+	if isChain {
+		result := []interface{}{}
+		for i := 0; i < inputRv.Len(); i++ {
+			result = append(result, iteratee(inputRv.Index(i).Interface()))
+		}
+		input.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for i := 0; i < inputRv.Len(); i++ {
+			result = reflect.Append(result, reflect.ValueOf(iteratee(inputRv.Index(i).Interface())))
+		}
+		outputSet.Set(result)
 	}
-	err = chainOutputConvert(output, input, isChain, result)
-	return err
+
+	return nil
 }
 
 type groupByObj struct {

@@ -18,18 +18,30 @@ func Chunk(output interface{}, input interface{}, sliceNum int) (err error) {
 		return err
 	}
 
-	result := []interface{}{}
 	groupNum := int(math.Ceil(float64(inputRv.Len()) / float64(sliceNum)))
-	for i := 0; i < groupNum; i++ {
-		endIndex := (i + 1) * sliceNum
-		if endIndex > inputRv.Len() {
-			endIndex = inputRv.Len()
+	if isChain {
+		result := []interface{}{}
+		for i := 0; i < groupNum; i++ {
+			endIndex := (i + 1) * sliceNum
+			if endIndex > inputRv.Len() {
+				endIndex = inputRv.Len()
+			}
+			result = append(result, inputRv.Slice((i*sliceNum), endIndex).Interface())
 		}
-		result = append(result, inputRv.Slice((i*sliceNum), endIndex).Interface())
+		input.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for i := 0; i < groupNum; i++ {
+			endIndex := (i + 1) * sliceNum
+			if endIndex > inputRv.Len() {
+				endIndex = inputRv.Len()
+			}
+			result = reflect.Append(result, inputRv.Slice((i*sliceNum), endIndex))
+		}
+		outputSet.Set(result)
 	}
-
-	err = chainOutputConvert(output, input, isChain, result)
-	return err
+	return nil
 }
 
 func Concat(output interface{}, inputs... interface{}) (err error) {
@@ -44,15 +56,28 @@ func Concat(output interface{}, inputs... interface{}) (err error) {
 			return errors.New(`Concat args.input must be slice`)
 		}
 	}
-	result := []interface{}{}
-	for _, input := range inputs {
-		inputReflect := reflect.ValueOf(input)
-		for i := 0; i < inputReflect.Len(); i++  {
-			result = append(result, inputReflect.Index(i).Interface())
+
+	if isChain {
+		result := []interface{}{}
+		for _, input := range inputs {
+			inputReflect := reflect.ValueOf(input)
+			for i := 0; i < inputReflect.Len(); i++  {
+				result = append(result, inputReflect.Index(i).Interface())
+			}
 		}
+		output.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for _, input := range inputs {
+			inputReflect := reflect.ValueOf(input)
+			for i := 0; i < inputReflect.Len(); i++  {
+				result = reflect.Append(result, inputReflect.Index(i))
+			}
+		}
+		outputSet.Set(result)
 	}
-	err = chainOutputConvert(output, output, isChain, result)
-	return err
+	return nil
 }
 
 func Difference (output interface{}, input interface{}, accessory interface{}) (err error) {
@@ -66,25 +91,26 @@ func Difference (output interface{}, input interface{}, accessory interface{}) (
 		return err
 	}
 
-	result := []interface{}{}
-	for i := 0; i < inputRv.Len(); i++ {
-		result = append(result, inputRv.Index(i).Interface())
-	}
-	accessoryRv := reflect.ValueOf(accessory)
-	for i := 0; i < accessoryRv.Len(); i++ {
-		isExist := false
-		if Includes(result, accessoryRv.Index(i).Interface()) {
-			isExist = true
+	if isChain {
+		result := []interface{}{}
+		for i := 0; i < inputRv.Len(); i++ {
+			if !Includes(accessory, inputRv.Index(i).Interface()) {
+				result = append(result, inputRv.Index(i).Interface())
+			}
 		}
-		if !isExist {
-			result = append(result, accessoryRv.Index(i).Interface())
+		input.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for i := 0; i < inputRv.Len(); i++ {
+			if !Includes(accessory, inputRv.Index(i).Interface()) {
+				result = reflect.Append(result, inputRv.Index(i))
+			}
 		}
+		outputSet.Set(result)
 	}
-
-	err = chainOutputConvert(output, input, isChain, result)
-	return err
+	return nil
 }
-
 
 func First(output interface{}, input interface{}) (err error) {
 	useInput, isChain := chainArgConvert(input)
@@ -181,18 +207,33 @@ func Uniq(output interface{}, input interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	result := []interface{}{}
-	for i := 0; i < inputRv.Len(); i++ {
-		isExist := false
-		if Includes(result, inputRv.Index(i).Interface()) {
-			isExist = true
+	if isChain {
+		result := []interface{}{}
+		for i := 0; i < inputRv.Len(); i++ {
+			isExist := false
+			if Includes(result, inputRv.Index(i).Interface()) {
+				isExist = true
+			}
+			if !isExist {
+				result = append(result, inputRv.Index(i).Interface())
+			}
 		}
-		if !isExist {
-			result = append(result, inputRv.Index(i).Interface())
+		input.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for i := 0; i < inputRv.Len(); i++ {
+			isExist := false
+			if Includes(result.Interface(), inputRv.Index(i).Interface()) {
+				isExist = true
+			}
+			if !isExist {
+				result = reflect.Append(result, inputRv.Index(i))
+			}
 		}
+		outputSet.Set(result)
 	}
-	err = chainOutputConvert(output, input, isChain, result)
-	return err
+	return nil
 }
 
 func UniqBy(output interface{}, input interface{}, iteratee func(interface{}) interface{}) (err error) {
@@ -203,20 +244,38 @@ func UniqBy(output interface{}, input interface{}, iteratee func(interface{}) in
 	if err != nil {
 		return err
 	}
-	result := []interface{}{}
-	for i := 0; i < inputRv.Len(); i++ {
-		isExist := false
-		for j := 0; j < len(result); j++ {
-			if reflect.DeepEqual(iteratee(result[j]), iteratee(inputRv.Index(i).Interface())) {
-				isExist = true
+
+	if isChain {
+		result := []interface{}{}
+		for i := 0; i < inputRv.Len(); i++ {
+			isExist := false
+			for j := 0; j < len(result); j++ {
+				if reflect.DeepEqual(iteratee(result[j]), iteratee(inputRv.Index(i).Interface())) {
+					isExist = true
+				}
+			}
+			if !isExist {
+				result = append(result, inputRv.Index(i).Interface())
 			}
 		}
-		if !isExist {
-			result = append(result, inputRv.Index(i).Interface())
+		input.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for i := 0; i < inputRv.Len(); i++ {
+			isExist := false
+			for j := 0; j < result.Len(); j++ {
+				if reflect.DeepEqual(iteratee(result.Index(j).Interface()), iteratee(inputRv.Index(i).Interface())) {
+					isExist = true
+				}
+			}
+			if !isExist {
+				result = reflect.Append(result, inputRv.Index(i))
+			}
 		}
+		outputSet.Set(result)
 	}
-	err = chainOutputConvert(output, input, isChain, result)
-	return err
+	return nil
 }
 
 func Union(output interface{}, inputs... interface{})  {
@@ -283,12 +342,21 @@ func Reverse (output interface{}, input interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	result := []interface{}{}
 
-	for i := 1; i <= inputRv.Len(); i++ {
-		result = append(result, inputRv.Index(inputRv.Len() - i).Interface())
+	if isChain {
+		result := []interface{}{}
+		for i := 1; i <= inputRv.Len(); i++ {
+			result = append(result, inputRv.Index(inputRv.Len() - i).Interface())
+		}
+		input.(*lodash).input = result
+	} else {
+		outputSet := reflect.ValueOf(output).Elem()
+		result := reflect.ValueOf(output).Elem()
+		for i := 1; i <= inputRv.Len(); i++ {
+			result = reflect.Append(result, inputRv.Index(inputRv.Len() - i))
+		}
+		outputSet.Set(result)
 	}
-	chainOutputConvert(output, input, isChain, result)
 	return nil
 }
 
