@@ -2,18 +2,19 @@ package lodash
 
 import (
 	"encoding/json"
-	"reflect"
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 var (
-	ErrNotFound = errors.New("record not found")
+	ErrNotFound       = errors.New("record not found")
 	ErrNotImplemented = errors.New("not implemented")
-	ErrInvalidData = errors.New("invalid data")
-	ErrInvalidField = errors.New("invalid field")
-	ErrInvalidValue = errors.New("invalid value")
+	ErrInvalidData    = errors.New("invalid data")
+	ErrInvalidField   = errors.New("invalid field")
+	ErrInvalidValue   = errors.New("invalid value")
 )
+
 //Reflect Types
 //Bool:          "bool",
 //Int:           "int",
@@ -55,6 +56,7 @@ func chainArgConvert(arg interface{}) (interface{}, bool) {
 	}
 	return useArg, isChain
 }
+
 // output: 外部变量输出地址, input: 入参【真入参/lodash对象】, isChain: 是否是链， result：运算结果
 func chainOutputConvert(output interface{}, l interface{}, isChain bool, result interface{}) error {
 	if isChain {
@@ -63,7 +65,7 @@ func chainOutputConvert(output interface{}, l interface{}, isChain bool, result 
 	if !isChain {
 		inputKind := reflect.ValueOf(result).Kind().String()
 		switch inputKind {
-		case`array`, `chan`, `map`, `slice`:
+		case `array`, `chan`, `map`, `slice`:
 			outputJson, err := json.Marshal(result)
 			if err != nil {
 				return errors.New(fmt.Sprintf(`output format error: %s`, err.Error()))
@@ -79,7 +81,7 @@ func chainOutputConvert(output interface{}, l interface{}, isChain bool, result 
 	return nil
 }
 
-func chainOutputNoSlice (output interface{}, l interface{}, isChain bool, result interface{})  {
+func chainOutputNoSlice(output interface{}, l interface{}, isChain bool, result interface{}) {
 	if isChain {
 		l.(*lodash).input = result
 	} else {
@@ -87,7 +89,7 @@ func chainOutputNoSlice (output interface{}, l interface{}, isChain bool, result
 	}
 }
 
-func CheckKindErr (funcName string, isChain bool, outputKind string, inputKind string) error {
+func CheckKindErr(funcName string, isChain bool, outputKind string, inputKind string) error {
 	if !Includes(ReflectArrayTypes, inputKind) {
 		return errors.New(fmt.Sprintf(`%s args.input must be slice`, funcName))
 	}
@@ -98,4 +100,3 @@ func CheckKindErr (funcName string, isChain bool, outputKind string, inputKind s
 	}
 	return nil
 }
-

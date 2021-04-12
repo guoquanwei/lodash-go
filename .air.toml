@@ -1,0 +1,7 @@
+[build]
+# Just plain old shell command. You could use `make` as well.
+cmd = "go build -o ./tmp/main ."
+
+[misc]
+# Delete tmp directory on exit
+clean_on_exit = true

@@ -431,7 +431,7 @@ func Sort(output interface{}, input interface{}, key string, order string) (err 
 	return
 }
 
-func wrapOrder (iterateers *[]func(interface{}) interface {}, key string)  {
+func wrapOrder(iterateers *[]func(interface{}) interface{}, key string) {
 	*iterateers = append(*iterateers, func(i interface{}) interface{} {
 		rv := reflect.ValueOf(i)
 		if rv.Kind().String() == `struct` {
@@ -443,11 +443,10 @@ func wrapOrder (iterateers *[]func(interface{}) interface {}, key string)  {
 }
 
 func Order(output interface{}, input interface{}, keys []string, orders []string) (err error) {
-	iterateers := []func(interface{}) interface {} {}
+	iterateers := []func(interface{}) interface{}{}
 	for _, key := range keys {
 		wrapOrder(&iterateers, key)
 	}
 	err = OrderBy(output, input, iterateers, orders)
 	return
 }
-
