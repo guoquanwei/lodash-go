@@ -327,16 +327,3 @@ func (l *lodash) Order(keys []string, orders []string) *lodash {
 	}
 	return l
 }
-
-func (l *lodash) ConcatStr(inputs ...string) *lodash {
-	if l.err != nil {
-		return l
-	}
-	newStr, err := ConcatStr(l.input, inputs...)
-	if err != nil {
-		l.err = err
-		return l
-	}
-	l.input = newStr
-	return l
-}
