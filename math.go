@@ -66,21 +66,22 @@ func Sum(input interface{}) (num float64, err error) {
 	useInput, _ := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
 	if !Includes(ReflectArrayTypes, inputRv.Kind().String()) {
-		return 0, errors.New(fmt.Sprintf(`%s args.input must be slice`, `Max`))
+		return 0, errors.New(fmt.Sprintf(`%s args.input must be slice`, `Sum`))
 	}
 	decimalNum := decimal.NewFromFloat(0)
 	for i := 0; i < inputRv.Len(); i++ {
 		kind := inputRv.Index(i).Kind().String()
-		var v float64
+		var v decimal.Decimal
 		if Includes(ReflectIntTypes, kind) {
-			v = float64(inputRv.Index(i).Int())
-		} else if Includes(ReflectFloatTypes, kind) {
-			v = inputRv.Index(i).Float()
+			v = decimal.NewFromInt(inputRv.Index(i).Int())
+		} else if kind == `float64` {
+			v = decimal.NewFromFloat(inputRv.Index(i).Float())
+		} else if kind == `float32` {
+			return 0, errors.New(fmt.Sprintf(`%s not support float32, will loss precision...`, `Sum`))
 		} else {
-			return 0, errors.New(fmt.Sprintf(`%s args.input element must be number`, `Max`))
+			return 0, errors.New(fmt.Sprintf(`%s args.input element must be number`, `Sum`))
 		}
-		decimalV := decimal.NewFromFloat(v)
-		decimalNum = decimalNum.Add(decimalV)
+		decimalNum = decimalNum.Add(v)
 	}
 	num, _ = decimalNum.Float64()
 	return num, nil
@@ -90,23 +91,23 @@ func Avg(input interface{}) (num float64, err error) {
 	useInput, _ := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
 	if !Includes(ReflectArrayTypes, inputRv.Kind().String()) {
-		return 0, errors.New(fmt.Sprintf(`%s args.input must be slice`, `Max`))
+		return 0, errors.New(fmt.Sprintf(`%s args.input must be slice`, `Avg`))
 	}
 	decimalCount := decimal.NewFromFloat(0)
 	for i := 0; i < inputRv.Len(); i++ {
 		kind := inputRv.Index(i).Kind().String()
-		var v float64
+		var v decimal.Decimal
 		if Includes(ReflectIntTypes, kind) {
-			v = float64(inputRv.Index(i).Int())
-		} else if Includes(ReflectFloatTypes, kind) {
-			v = inputRv.Index(i).Float()
+			v = decimal.NewFromInt(inputRv.Index(i).Int())
+		} else if kind == `float64` {
+			v = decimal.NewFromFloat(inputRv.Index(i).Float())
+		} else if kind == `float32` {
+			return 0, errors.New(fmt.Sprintf(`%s not support float32, will loss precision...`, `Avg`))
 		} else {
-			return 0, errors.New(fmt.Sprintf(`%s args.input element must be number`, `Max`))
+			return 0, errors.New(fmt.Sprintf(`%s args.input element must be number`, `Avg`))
 		}
-		decimalV := decimal.NewFromFloat(v)
-		decimalCount = decimalCount.Add(decimalV)
+		decimalCount = decimalCount.Add(v)
 	}
-	count, _ := decimalCount.Float64()
-	num, _ = decimal.NewFromFloat(count).Div(decimal.NewFromInt(int64(inputRv.Len()))).Float64()
+	num, _ = decimalCount.Div(decimal.NewFromInt(int64(inputRv.Len()))).Float64()
 	return num, nil
 }
