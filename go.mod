@@ -1,4 +1,4 @@
-module lodash-go
+module github.com/guoquanwei/lodash-go
 
 go 1.16
 
