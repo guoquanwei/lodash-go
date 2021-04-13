@@ -327,3 +327,55 @@ func (l *lodash) Order(keys []string, orders []string) *lodash {
 	}
 	return l
 }
+
+func (l *lodash) Min() *lodash {
+	if l.err != nil {
+		return l
+	}
+	v, err := Min(l)
+	if err != nil {
+		l.err = err
+		return l
+	}
+	l.input = v
+	return l
+}
+
+func (l *lodash) Max() *lodash {
+	if l.err != nil {
+		return l
+	}
+	v, err := Max(l)
+	if err != nil {
+		l.err = err
+		return l
+	}
+	l.input = v
+	return l
+}
+
+func (l *lodash) Sum() *lodash {
+	if l.err != nil {
+		return l
+	}
+	v, err := Sum(l)
+	if err != nil {
+		l.err = err
+		return l
+	}
+	l.input = v
+	return l
+}
+
+func (l *lodash) Avg() *lodash {
+	if l.err != nil {
+		return l
+	}
+	v, err := Avg(l)
+	if err != nil {
+		l.err = err
+		return l
+	}
+	l.input = v
+	return l
+}

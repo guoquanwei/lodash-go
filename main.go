@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"reflect"
+	"lodash-go/lodash"
 )
 
 func main() {
-	var int1 int
-	int1 = 1
-	fmt.Println(reflect.ValueOf(int1).Int())
+	var v float64
+	err := lodash.Chain([]float64{2.34, 1.324}).Avg().Value(&v)
+	fmt.Println(err, v)
 }
