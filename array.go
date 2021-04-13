@@ -44,7 +44,7 @@ func Chunk(output interface{}, input interface{}, sliceNum int) (err error) {
 	return nil
 }
 
-func Concat(output interface{}, inputs... interface{}) (err error) {
+func Concat(output interface{}, inputs ...interface{}) (err error) {
 	_, isChain := chainArgConvert(output)
 	if !isChain {
 		if kind := reflect.ValueOf(output).Kind(); kind != reflect.Ptr {
@@ -61,7 +61,7 @@ func Concat(output interface{}, inputs... interface{}) (err error) {
 		result := []interface{}{}
 		for _, input := range inputs {
 			inputReflect := reflect.ValueOf(input)
-			for i := 0; i < inputReflect.Len(); i++  {
+			for i := 0; i < inputReflect.Len(); i++ {
 				result = append(result, inputReflect.Index(i).Interface())
 			}
 		}
@@ -71,7 +71,7 @@ func Concat(output interface{}, inputs... interface{}) (err error) {
 		result := reflect.ValueOf(output).Elem()
 		for _, input := range inputs {
 			inputReflect := reflect.ValueOf(input)
-			for i := 0; i < inputReflect.Len(); i++  {
+			for i := 0; i < inputReflect.Len(); i++ {
 				result = reflect.Append(result, inputReflect.Index(i))
 			}
 		}
@@ -80,7 +80,7 @@ func Concat(output interface{}, inputs... interface{}) (err error) {
 	return nil
 }
 
-func Difference (output interface{}, input interface{}, accessory interface{}) (err error) {
+func Difference(output interface{}, input interface{}, accessory interface{}) (err error) {
 	useInput, isChain := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
 	if kind := reflect.ValueOf(accessory).Kind(); kind != reflect.Slice {
@@ -123,7 +123,7 @@ func First(output interface{}, input interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	chainOutputNoSlice(output, input, isChain,inputRv.Index(0).Interface())
+	chainOutputNoSlice(output, input, isChain, inputRv.Index(0).Interface())
 	return nil
 }
 
@@ -138,7 +138,7 @@ func Last(output interface{}, input interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	chainOutputNoSlice(output, input, isChain, inputRv.Index(inputRv.Len() - 1).Interface())
+	chainOutputNoSlice(output, input, isChain, inputRv.Index(inputRv.Len()-1).Interface())
 	return nil
 }
 
@@ -148,7 +148,7 @@ func flattenDepth(array interface{}, result *[]interface{}, level int) {
 	if !Includes(ReflectArrayTypes, arrayRv.Kind().String()) {
 		arrayRv = arrayRv.Elem()
 	}
-	for i :=0; i < arrayRv.Len(); i++  {
+	for i := 0; i < arrayRv.Len(); i++ {
 		kind := arrayRv.Index(i).Kind().String()
 		if kind == `interface` {
 			kind = arrayRv.Index(i).Elem().Kind().String()
@@ -156,7 +156,7 @@ func flattenDepth(array interface{}, result *[]interface{}, level int) {
 		if level > 0 && Includes(ReflectArrayTypes, kind) {
 			flattenDepth(arrayRv.Index(i).Interface(), result, level)
 		} else {
-			*result = append(*result,arrayRv.Index(i).Interface())
+			*result = append(*result, arrayRv.Index(i).Interface())
 		}
 	}
 	return
@@ -167,7 +167,7 @@ func flattenForever(array interface{}, result *[]interface{}) {
 	if !Includes(ReflectArrayTypes, arrayRv.Kind().String()) {
 		arrayRv = arrayRv.Elem()
 	}
-	for i :=0; i < arrayRv.Len(); i++  {
+	for i := 0; i < arrayRv.Len(); i++ {
 		kind := arrayRv.Index(i).Kind().String()
 		if kind == `interface` {
 			kind = arrayRv.Index(i).Elem().Kind().String()
@@ -175,7 +175,7 @@ func flattenForever(array interface{}, result *[]interface{}) {
 		if Includes(ReflectArrayTypes, kind) {
 			flattenForever(arrayRv.Index(i).Interface(), result)
 		} else {
-			*result = append(*result,arrayRv.Index(i).Interface())
+			*result = append(*result, arrayRv.Index(i).Interface())
 		}
 	}
 	return
@@ -193,7 +193,7 @@ func Flatten(output interface{}, input interface{}, level int) (err error) {
 	if level <= 0 {
 		flattenForever(useInput, &result)
 	} else {
-		flattenDepth(useInput, &result, level + 1)
+		flattenDepth(useInput, &result, level+1)
 	}
 	err = chainOutputConvert(output, input, isChain, result)
 	return err
@@ -278,11 +278,11 @@ func UniqBy(output interface{}, input interface{}, iteratee func(interface{}) in
 	return nil
 }
 
-func Union(output interface{}, inputs... interface{})  {
+func Union(output interface{}, inputs ...interface{}) {
 	Chain(inputs[0]).Concat(inputs[1:]...).Uniq().Value(output)
 }
 
-func UnionBy(output interface{}, iteratee func(interface{}) interface{}, inputs... interface{})  {
+func UnionBy(output interface{}, iteratee func(interface{}) interface{}, inputs ...interface{}) {
 	Chain(inputs[0]).Concat(inputs[1:]...).UniqBy(iteratee).Value(output)
 }
 
@@ -312,7 +312,7 @@ func LastIndexOf(input interface{}, iteratee func(interface{}) bool) int {
 	return index
 }
 
-func Join (output interface{}, input interface{}, joinStr string) (err error) {
+func Join(output interface{}, input interface{}, joinStr string) (err error) {
 	useInput, isChain := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
 	err = CheckKindErr(`Join`, isChain, reflect.ValueOf(output).Kind().String(), inputRv.Kind().String())
@@ -321,13 +321,13 @@ func Join (output interface{}, input interface{}, joinStr string) (err error) {
 	}
 	str := ``
 	for i := 0; i < inputRv.Len(); i++ {
-		kind := inputRv.Index(i).Elem().Kind().String()
+		kind := inputRv.Index(i).Kind().String()
 		if Includes(ReflectIntTypes, kind) {
-			str = str + strconv.Itoa(int(inputRv.Index(i).Elem().Int()))
+			str = str + strconv.Itoa(int(inputRv.Index(i).Int()))
 		} else {
-			str = str + inputRv.Index(i).Elem().String()
+			str = str + inputRv.Index(i).String()
 		}
-		if i != inputRv.Len() - 1 {
+		if i != inputRv.Len()-1 {
 			str += joinStr
 		}
 	}
@@ -335,7 +335,7 @@ func Join (output interface{}, input interface{}, joinStr string) (err error) {
 	return nil
 }
 
-func Reverse (output interface{}, input interface{}) (err error) {
+func Reverse(output interface{}, input interface{}) (err error) {
 	useInput, isChain := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
 	err = CheckKindErr(`Reverse`, isChain, reflect.ValueOf(output).Kind().String(), inputRv.Kind().String())
@@ -346,17 +346,16 @@ func Reverse (output interface{}, input interface{}) (err error) {
 	if isChain {
 		result := []interface{}{}
 		for i := 1; i <= inputRv.Len(); i++ {
-			result = append(result, inputRv.Index(inputRv.Len() - i).Interface())
+			result = append(result, inputRv.Index(inputRv.Len()-i).Interface())
 		}
 		input.(*lodash).input = result
 	} else {
 		outputSet := reflect.ValueOf(output).Elem()
 		result := reflect.ValueOf(output).Elem()
 		for i := 1; i <= inputRv.Len(); i++ {
-			result = reflect.Append(result, inputRv.Index(inputRv.Len() - i))
+			result = reflect.Append(result, inputRv.Index(inputRv.Len()-i))
 		}
 		outputSet.Set(result)
 	}
 	return nil
 }
-
