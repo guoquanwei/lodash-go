@@ -71,11 +71,11 @@ func Map(output interface{}, input interface{}, iteratee func(interface{}) inter
 func GroupBy(output interface{}, input interface{}, iteratee func(interface{}) (key interface{})) (err error)
 // group by iteratee function's return value.
 // args:
-//  type groupByItem struct {
+//  type GroupByItem struct {
 //    Key    interface{}
 //    Values []interface{}
 //  }
-//  type GroupByRes []groupByItem
+//  type GroupByRes []GroupByItem
 
 // example:
 // groups := lodash.GroupByRes{}
