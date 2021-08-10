@@ -33,11 +33,11 @@ func IncludesBy(input interface{}, iteratee func(interface{}) bool) bool
 
 func Filter(output interface{}, input interface{}, iteratee func(interface{}) bool) (err error)
 // all match condition elements append to result.
-// example: Filter(&result,[]some_struct{...}, func(v interface{}) bool { return v.(some_struct).Id > 1 })
+// example: Filter(&result,[]some_struct{...}, func(v interface{}) bool { return v.(some_struct).ID > 1 })
 
 func Every(input interface{}, iteratee func(interface{}) bool) bool
 // if all `input`'s element can be true(iteratee(element)), will return true.
-// example: Every([]some_struct{...}, func(v interface{}) bool { return v.(some_struct).Id > 1 })
+// example: Every([]some_struct{...}, func(v interface{}) bool { return v.(some_struct).ID > 1 })
 
 func Find(output interface{}, input interface{}, iteratee func(interface{}) bool) (err error)
 // return first match condition element.
@@ -64,20 +64,23 @@ func Map(output interface{}, input interface{}, iteratee func(interface{}) inter
 // iteratee `input`'s elements and return new value.
 // example: Map(&result, []some_struct{...}, func(v interface{}) interface{} {
 //   newStruct := some_Struct{}
-//   newStruct.Id = v.(some_Struct).Id + 1
+//   newStruct.ID = v.(some_Struct).ID + 1
 //   return newStruct
 // })
 
 func GroupBy(output interface{}, input interface{}, iteratee func(interface{}) (key interface{})) (err error)
 // group by iteratee function's return value.
+// args:
+//  type groupByItem struct {
+//    Key    interface{}
+//    Values []interface{}
+//  }
+//  type GroupByRes []groupByItem
+
 // example:
-// type someGroup struct {
-//   Key string `json:"key"`
-//   Values []some_struct `json:"values"`
-// }
-// groups := []someGroup{}
+// groups := lodash.GroupByRes{}
 // lodash.GroupBy(&groups, []some_struct{...}, func(i interface{}) (key interface{}) {
-//   return i.(some_struct).Id
+//   return i.(some_struct).ID
 // })
 
 func Order(output interface{}, input interface{}, keys []string, orders []string) (err error)
@@ -120,21 +123,21 @@ package main
 import "github.com/guoquanwei/lodash-go"
 
 type User struct {
-	Id   int
+	ID   int
 	Name string
 }
 
 func main ()  {
 	// simple method
 	newUsers := []User{}
-	err1 := lodash.Filter(&newUsers, []User{{Id: 1}, {Id: 2}, func(i interface{}) bool {
-		return i.(User).Id > 1
+	err1 := lodash.Filter(&newUsers, []User{{ID: 1}, {ID: 2}, func(i interface{}) bool {
+		return i.(User).ID > 1
 	}})
 
 	// multi methods use lodash.Chain()
 	user := User{}
-	err2 := lodash.Chain([]User{{Id: 1}, {Id: 2}).Filter(func(i interface{}) bool {
-		return i.(User).Id > 1
+	err2 := lodash.Chain([]User{{ID: 1}, {ID: 2}).Filter(func(i interface{}) bool {
+		return i.(User).ID > 1
 	}}).First().Value(&user)
 	
 }

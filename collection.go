@@ -141,10 +141,12 @@ func Map(output interface{}, input interface{}, iteratee func(interface{}) inter
 	return nil
 }
 
-type groupByObj struct {
+type GroupByItem struct {
 	Key    interface{}
 	Values []interface{}
 }
+
+type GroupByRes []GroupByItem
 
 // output type must like []groupByObj.
 func GroupBy(output interface{}, input interface{}, iteratee func(interface{}) (key interface{})) (err error) {
@@ -154,14 +156,14 @@ func GroupBy(output interface{}, input interface{}, iteratee func(interface{}) (
 	if err != nil {
 		return err
 	}
-	result := []groupByObj{}
+	result := GroupByRes{}
 	for i := 0; i < inputRv.Len(); i++ {
 		groupKey := iteratee(inputRv.Index(i).Interface())
 		groupIndex := IndexOf(result, func(v interface{}) bool {
-			return v.(groupByObj).Key == groupKey
+			return v.(GroupByItem).Key == groupKey
 		})
 		if groupIndex == -1 {
-			result = append(result, groupByObj{
+			result = append(result, GroupByItem{
 				Key:    groupKey,
 				Values: []interface{}{inputRv.Index(i).Interface()},
 			})
