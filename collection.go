@@ -196,6 +196,18 @@ func Find(output interface{}, input interface{}, iteratee func(interface{}) bool
 	return nil
 }
 
+// if not found, return -1.
+func FindIndex(input interface{}, iteratee func(interface{}) bool) (index int) {
+	inputRv := reflect.ValueOf(input)
+	index = -1
+	for i := 0; i < inputRv.Len(); i++ {
+		if iteratee(inputRv.Index(i).Interface()) {
+			index = i
+		}
+	}
+	return index
+}
+
 type sorter struct {
 	items []interface{}
 	less  func(i, j interface{}) bool
