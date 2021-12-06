@@ -2,6 +2,7 @@ package lodash
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 )
@@ -312,7 +313,7 @@ func OrderBy(output interface{}, input interface{}, iterateers []func(interface{
 			}
 			for index := 0; index < len(iterateers); index++ {
 				valueKind := reflect.ValueOf(iResults[index]).Kind().String()
-				if Includes([]string{`array`, `slice`, `map`, `struct`, `ptr`, `chan`, `interface`, `func`}, valueKind) {
+				if Includes([]string{`array`, `slice`, `struct`, `chan`, `interface`, `func`}, valueKind) {
 					panic(`SortBy compare value is not supported type!`)
 				}
 				// order default `asc`.
@@ -322,8 +323,8 @@ func OrderBy(output interface{}, input interface{}, iterateers []func(interface{
 				}
 				if order == `asc` {
 					if Includes(ReflectIntTypes, valueKind) {
-						left := reflect.ValueOf(iResults[index]).Int()
-						right := reflect.ValueOf(jResults[index]).Int()
+						left := fmt.Sprintf(`%d`, reflect.ValueOf(iResults[index]).Interface())
+						right := fmt.Sprintf(`%d`, reflect.ValueOf(jResults[index]).Interface())
 						if left < right {
 							return true
 						} else if left == right {
@@ -368,8 +369,8 @@ func OrderBy(output interface{}, input interface{}, iterateers []func(interface{
 				}
 				if order == `desc` {
 					if Includes(ReflectIntTypes, valueKind) {
-						left := reflect.ValueOf(iResults[index]).Int()
-						right := reflect.ValueOf(jResults[index]).Int()
+						left := fmt.Sprintf(`%d`, reflect.ValueOf(iResults[index]).Interface())
+						right := fmt.Sprintf(`%d`, reflect.ValueOf(jResults[index]).Interface())
 						if left > right {
 							return true
 						} else if left == right {
@@ -436,9 +437,16 @@ func Sort(output interface{}, input interface{}, key string, order string) (err 
 func wrapOrder(iterateers *[]func(interface{}) interface{}, key string) {
 	*iterateers = append(*iterateers, func(i interface{}) interface{} {
 		rv := reflect.ValueOf(i)
-		if rv.Kind().String() == `struct` {
-			return reflect.ValueOf(i).FieldByName(key).Interface()
-		} else {
+		switch rv.Kind().String() {
+		case `struct`:
+			return rv.FieldByName(key).Interface()
+		case `map`:
+			newV := reflect.ValueOf(i).Interface().(map[string]interface{})
+			return newV[key]
+		case `ptr`:
+			newV := rv.Elem().Interface()
+			return reflect.ValueOf(newV).FieldByName(key).Interface()
+		default:
 			return i
 		}
 	})
