@@ -7,9 +7,6 @@ import (
 	"sort"
 )
 
-//.Filter(func(user interface{}) bool {
-//	return user.(User).Id == 3
-//})
 func Filter(output interface{}, input interface{}, iteratee func(interface{}) bool) (err error) {
 	useInput, isChain := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
@@ -113,7 +110,7 @@ func ForEach(input interface{}, iteratee func(interface{})) (err error) {
 //.Map(func(user interface{}) interface{} {
 //	newUser := User{}
 //	reflect.ValueOf(&newUser).Elem().Set(reflect.ValueOf(user))
-//	newUser.Name = `hahah`
+//	newUser.Name = `tom`
 //	return newUser.Id
 //})
 
@@ -197,103 +194,57 @@ func Find(output interface{}, input interface{}, iteratee func(interface{}) bool
 	return nil
 }
 
-type sorter struct {
-	items []interface{}
-	less  func(i, j interface{}) bool
+func SortBy(output interface{}, input interface{}, valueFunction func(interface{}) interface{}, order string) (err error) {
+	return OrderBy(output, input, []func(interface{}) interface{}{valueFunction}, []string{order})
 }
 
-func (s sorter) Len() int {
-	return len(s.items)
+type LessFunc func(p, q interface{}) bool
+type multiSorter struct {
+	changes []interface{}
+	less    []LessFunc
 }
 
-func (s sorter) Swap(i, j int) {
-	s.items[i], s.items[j] = s.items[j], s.items[i]
-}
-
-func (s sorter) Less(i, j int) bool {
-	return s.less(s.items[i], s.items[j])
-}
-
-func SortBy(output interface{}, input interface{}, iteratee func(interface{}) interface{}, order string) (err error) {
-	useInput, isChain := chainArgConvert(input)
-	inputRv := reflect.ValueOf(useInput)
-	err = CheckKindErr(`SortBy`, isChain, reflect.ValueOf(output).Kind().String(), inputRv.Kind().String())
-	if err != nil {
-		return err
+func OrderByLess(less ...LessFunc) *multiSorter {
+	return &multiSorter{
+		less: less,
 	}
+}
+func (ms *multiSorter) Sort(changes []interface{}) {
+	ms.changes = changes
+	sort.Sort(ms)
+}
 
-	items := []interface{}{}
-	for i := 0; i < inputRv.Len(); i++ {
-		items = append(items, inputRv.Index(i).Interface())
-	}
-	s := sorter{
-		items: items,
-		less: func(i, j interface{}) bool {
-			i = iteratee(i)
-			j = iteratee(j)
-			valueKind := reflect.ValueOf(i).Kind().String()
-			if Includes([]string{`array`, `slice`, `map`, `struct`, `ptr`, `chan`, `interface`, `func`}, valueKind) {
-				panic(`SortBy compare value is not supported type!`)
-			}
-			if order == `asc` {
-				if Includes(ReflectIntTypes, valueKind) {
-					return reflect.ValueOf(i).Int() < reflect.ValueOf(j).Int()
-				}
-				if Includes(ReflectFloatTypes, valueKind) {
-					return reflect.ValueOf(i).Float() < reflect.ValueOf(j).Float()
-				}
-				if valueKind == `string` {
-					return reflect.ValueOf(i).String() < reflect.ValueOf(j).String()
-				}
-				if valueKind == `bool` {
-					if reflect.ValueOf(i).Bool() == true {
-						return false
-					} else {
-						return true
-					}
-				}
-			}
-			if order == `desc` {
-				if Includes(ReflectIntTypes, valueKind) {
-					return reflect.ValueOf(i).Int() > reflect.ValueOf(j).Int()
-				}
-				if Includes(ReflectFloatTypes, valueKind) {
-					return reflect.ValueOf(i).Float() > reflect.ValueOf(j).Float()
-				}
-				if valueKind == `string` {
-					return reflect.ValueOf(i).String() > reflect.ValueOf(j).String()
-				}
-				if valueKind == `bool` {
-					if reflect.ValueOf(i).Bool() == true {
-						return true
-					} else {
-						return false
-					}
-				}
-			}
+func (ms *multiSorter) Len() int {
+	return len(ms.changes)
+}
+func (ms *multiSorter) Swap(i, j int) {
+	ms.changes[i], ms.changes[j] = ms.changes[j], ms.changes[i]
+}
+func (ms *multiSorter) Less(i, j int) bool {
+	p, q := ms.changes[i], ms.changes[j]
+	// Try all but the last comparison.
+	var k int
+	for k = 0; k < len(ms.less)-1; k++ {
+		less := ms.less[k]
+		switch {
+		case less(p, q):
+			// p < q, so we have a decision.
+			return true
+		case less(q, p):
+			// p > q, so we have a decision.
 			return false
-		},
+		}
+		// p == q; try the next comparison.
 	}
-	sort.Sort(s)
-	err = chainOutputConvert(output, input, isChain, s.items)
-	return err
+	// All comparisons to here said "equal", so just return whatever
+	// the final comparison reports.
+	return ms.less[k](p, q)
 }
 
-//iterateers := []func(interface{}) interface{}{
-//	func(i interface{}) interface{} {
-//		return i.(User).Id
-//	},
-//	func(i interface{}) interface{} {
-//		return i.(User).Value
-//	},
-//	func(i interface{}) interface{} {
-//		return i.(User).Name
-//	},
-//}
-func OrderBy(output interface{}, input interface{}, iterateers []func(interface{}) interface{}, orders []string) (err error) {
+func OrderBy(output interface{}, input interface{}, valueFunctions []func(interface{}) interface{}, orders []string) (err error) {
 	useInput, isChain := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
-	err = CheckKindErr(`SortBy`, isChain, reflect.ValueOf(output).Kind().String(), inputRv.Kind().String())
+	err = CheckKindErr(`OrderBy`, isChain, reflect.ValueOf(output).Kind().String(), inputRv.Kind().String())
 	if err != nil {
 		return err
 	}
@@ -302,140 +253,75 @@ func OrderBy(output interface{}, input interface{}, iterateers []func(interface{
 	for i := 0; i < inputRv.Len(); i++ {
 		items = append(items, inputRv.Index(i).Interface())
 	}
-	s := sorter{
-		items: items,
-		less: func(i, j interface{}) bool {
-			iResults := []interface{}{}
-			jResults := []interface{}{}
-			for _, iteratee := range iterateers {
-				iResults = append(iResults, iteratee(i))
-				jResults = append(jResults, iteratee(j))
-			}
-			for index := 0; index < len(iterateers); index++ {
-				valueKind := reflect.ValueOf(iResults[index]).Kind().String()
-				if Includes([]string{`array`, `slice`, `struct`, `chan`, `interface`, `func`}, valueKind) {
-					panic(`SortBy compare value is not supported type!`)
-				}
+
+	var lessFunctions []LessFunc
+	for index := range valueFunctions {
+		func(i int) {
+			lessFunctions = append(lessFunctions, func(p, q interface{}) bool {
 				// order default `asc`.
 				order := `asc`
-				if len(orders) >= index+1 {
-					order = orders[index]
+				if len(orders) >= i+1 && orders[i] == `desc` {
+					order = `desc`
+				}
+				pFuncValue := valueFunctions[i](p)
+				qFuncValue := valueFunctions[i](q)
+				pRv := reflect.ValueOf(pFuncValue)
+				qRv := reflect.ValueOf(qFuncValue)
+
+				valueKind := pRv.Kind().String()
+				if Includes([]string{`array`, `slice`, `struct`, `chan`, `interface`, `func`}, valueKind) {
+					panic(`OrderBy compare value is not supported type!`)
+				}
+				if Includes(ReflectFloatTypes, valueKind) {
+					if pRv.Float() == qRv.Float() {
+						return false
+					}
+					if order == `asc` {
+						return pRv.Float() < qRv.Float()
+					} else {
+						return pRv.Float() > qRv.Float()
+					}
+				}
+
+				pValue := fmt.Sprintf(`%v`, pFuncValue)
+				qValue := fmt.Sprintf(`%v`, qFuncValue)
+				// bool to string: "0" / "1"
+				if valueKind == `bool` {
+					pValue, qValue = `0`, `0`
+					if pRv.Bool() {
+						pValue = `1`
+					}
+					if qRv.Bool() {
+						qValue = `1`
+					}
+				}
+
+				// "equal" == "not less", next less().
+				if pValue == qValue {
+					return false
 				}
 				if order == `asc` {
-					if Includes(ReflectIntTypes, valueKind) {
-						left := fmt.Sprintf(`%d`, reflect.ValueOf(iResults[index]).Interface())
-						right := fmt.Sprintf(`%d`, reflect.ValueOf(jResults[index]).Interface())
-						if left < right {
-							return true
-						} else if left == right {
-							continue
-						} else {
-							return false
-						}
-					}
-					if Includes(ReflectFloatTypes, valueKind) {
-						left := reflect.ValueOf(iResults[index]).Float()
-						right := reflect.ValueOf(jResults[index]).Float()
-						if left < right {
-							return true
-						} else if left == right {
-							continue
-						} else {
-							return false
-						}
-					}
-					if valueKind == `string` {
-						left := reflect.ValueOf(iResults[index]).String()
-						right := reflect.ValueOf(jResults[index]).String()
-						if left < right {
-							return true
-						} else if left == right {
-							continue
-						} else {
-							return false
-						}
-					}
-					if valueKind == `bool` {
-						left := reflect.ValueOf(iResults[index]).Bool()
-						right := reflect.ValueOf(jResults[index]).Bool()
-						if left == right {
-							continue
-						} else if left == false {
-							return true
-						} else {
-							return false
-						}
-					}
+					return pValue < qValue
+				} else {
+					return pValue > qValue
 				}
-				if order == `desc` {
-					if Includes(ReflectIntTypes, valueKind) {
-						left := fmt.Sprintf(`%d`, reflect.ValueOf(iResults[index]).Interface())
-						right := fmt.Sprintf(`%d`, reflect.ValueOf(jResults[index]).Interface())
-						if left > right {
-							return true
-						} else if left == right {
-							continue
-						} else {
-							return false
-						}
-					}
-					if Includes(ReflectFloatTypes, valueKind) {
-						left := reflect.ValueOf(iResults[index]).Float()
-						right := reflect.ValueOf(jResults[index]).Float()
-						if left > right {
-							return true
-						} else if left == right {
-							continue
-						} else {
-							return false
-						}
-					}
-					if valueKind == `string` {
-						left := reflect.ValueOf(iResults[index]).String()
-						right := reflect.ValueOf(jResults[index]).String()
-						if left > right {
-							return true
-						} else if left == right {
-							continue
-						} else {
-							return false
-						}
-					}
-					if valueKind == `bool` {
-						left := reflect.ValueOf(iResults[index]).Bool()
-						right := reflect.ValueOf(jResults[index]).Bool()
-						if left == right {
-							continue
-						} else if left == true {
-							return true
-						} else {
-							return false
-						}
-					}
-				}
-			}
-			return false
-		},
+			})
+		}(index)
 	}
-	sort.Sort(s)
-	err = chainOutputConvert(output, input, isChain, s.items)
+	OrderByLess(lessFunctions...).Sort(items)
+	err = chainOutputConvert(output, input, isChain, items)
 	return err
 }
 
 func Sort(output interface{}, input interface{}, key string, order string) (err error) {
-	err = SortBy(output, input, func(i interface{}) interface{} {
-		rv := reflect.ValueOf(i)
-		if rv.Kind().String() == `struct` {
-			return reflect.ValueOf(i).FieldByName(key).Interface()
-		} else {
-			return i
-		}
-	}, order)
+	var valueFunctions []func(interface{}) interface{}
+	wrapOrder(&valueFunctions, key)
+	err = OrderBy(output, input, valueFunctions, []string{order})
 	return
 }
 
-func wrapOrder(iterateers *[]func(interface{}) interface{}, key string) {
-	*iterateers = append(*iterateers, func(i interface{}) interface{} {
+func wrapOrder(valueFunctions *[]func(interface{}) interface{}, key string) {
+	*valueFunctions = append(*valueFunctions, func(i interface{}) interface{} {
 		rv := reflect.ValueOf(i)
 		switch rv.Kind().String() {
 		case `struct`:
@@ -453,10 +339,10 @@ func wrapOrder(iterateers *[]func(interface{}) interface{}, key string) {
 }
 
 func Order(output interface{}, input interface{}, keys []string, orders []string) (err error) {
-	iterateers := []func(interface{}) interface{}{}
+	var valueFunctions []func(interface{}) interface{}
 	for _, key := range keys {
-		wrapOrder(&iterateers, key)
+		wrapOrder(&valueFunctions, key)
 	}
-	err = OrderBy(output, input, iterateers, orders)
+	err = OrderBy(output, input, valueFunctions, orders)
 	return
 }
