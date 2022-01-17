@@ -282,7 +282,26 @@ func OrderBy(output interface{}, input interface{}, valueFunctions []func(interf
 						return pRv.Float() > qRv.Float()
 					}
 				}
-
+				if Includes(ReflectIntTypes, valueKind) {
+					if pRv.Int() == qRv.Int() {
+						return false
+					}
+					if order == `asc` {
+						return pRv.Int() < qRv.Int()
+					} else {
+						return pRv.Int() > qRv.Int()
+					}
+				}
+				if Includes(ReflectUIntTypes, valueKind) {
+					if pRv.Uint() == qRv.Uint() {
+						return false
+					}
+					if order == `asc` {
+						return pRv.Uint() < qRv.Uint()
+					} else {
+						return pRv.Uint() > qRv.Uint()
+					}
+				}
 				pValue := fmt.Sprintf(`%v`, pFuncValue)
 				qValue := fmt.Sprintf(`%v`, qFuncValue)
 				// bool to string: "0" / "1"

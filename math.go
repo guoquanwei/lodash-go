@@ -21,6 +21,8 @@ func Min(input interface{}) (num float64, err error) {
 		var v float64
 		if Includes(ReflectIntTypes, kind) {
 			v = float64(inputRv.Index(i).Int())
+		} else if Includes(ReflectUIntTypes, kind) {
+			v = float64(inputRv.Index(i).Uint())
 		} else if Includes(ReflectFloatTypes, kind) {
 			v = inputRv.Index(i).Float()
 		} else {
@@ -47,6 +49,8 @@ func Max(input interface{}) (num float64, err error) {
 		var v float64
 		if Includes(ReflectIntTypes, kind) {
 			v = float64(inputRv.Index(i).Int())
+		} else if Includes(ReflectUIntTypes, kind) {
+			v = float64(inputRv.Index(i).Uint())
 		} else if Includes(ReflectFloatTypes, kind) {
 			v = inputRv.Index(i).Float()
 		} else {
@@ -74,10 +78,10 @@ func Sum(input interface{}) (num float64, err error) {
 		var v decimal.Decimal
 		if Includes(ReflectIntTypes, kind) {
 			v = decimal.NewFromInt(inputRv.Index(i).Int())
-		} else if kind == `float64` {
+		} else if Includes(ReflectUIntTypes, kind) {
+			v = decimal.NewFromInt(int64(inputRv.Index(i).Uint()))
+		} else if Includes(ReflectFloatTypes, kind) {
 			v = decimal.NewFromFloat(inputRv.Index(i).Float())
-		} else if kind == `float32` {
-			return 0, errors.New(fmt.Sprintf(`%s not support float32, will loss precision...`, `Sum`))
 		} else {
 			return 0, errors.New(fmt.Sprintf(`%s args.input element must be number`, `Sum`))
 		}
@@ -99,10 +103,10 @@ func Avg(input interface{}) (num float64, err error) {
 		var v decimal.Decimal
 		if Includes(ReflectIntTypes, kind) {
 			v = decimal.NewFromInt(inputRv.Index(i).Int())
-		} else if kind == `float64` {
+		} else if Includes(ReflectUIntTypes, kind) {
+			v = decimal.NewFromInt(int64(inputRv.Index(i).Uint()))
+		} else if Includes(ReflectFloatTypes, kind) {
 			v = decimal.NewFromFloat(inputRv.Index(i).Float())
-		} else if kind == `float32` {
-			return 0, errors.New(fmt.Sprintf(`%s not support float32, will loss precision...`, `Avg`))
 		} else {
 			return 0, errors.New(fmt.Sprintf(`%s args.input element must be number`, `Avg`))
 		}

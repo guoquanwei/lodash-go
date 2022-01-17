@@ -324,6 +324,8 @@ func Join(output interface{}, input interface{}, joinStr string) (err error) {
 		kind := inputRv.Index(i).Kind().String()
 		if Includes(ReflectIntTypes, kind) {
 			str = str + strconv.Itoa(int(inputRv.Index(i).Int()))
+		} else if Includes(ReflectUIntTypes, kind) {
+			str = str + strconv.Itoa(int(inputRv.Index(i).Uint()))
 		} else {
 			str = str + inputRv.Index(i).String()
 		}
