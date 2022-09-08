@@ -241,7 +241,11 @@ func (ms *multiSorter) Less(i, j int) bool {
 	return ms.less[k](p, q)
 }
 
+// OrderBy 适用于复杂类型
 func OrderBy(output interface{}, input interface{}, valueFunctions []func(interface{}) interface{}, orders []string) (err error) {
+	if len(valueFunctions) == 0 {
+		return errors.New(`valueFunctions not empty`)
+	}
 	useInput, isChain := chainArgConvert(input)
 	inputRv := reflect.ValueOf(useInput)
 	err = CheckKindErr(`OrderBy`, isChain, reflect.ValueOf(output).Kind().String(), inputRv.Kind().String())
@@ -361,6 +365,12 @@ func Order(output interface{}, input interface{}, keys []string, orders []string
 	var valueFunctions []func(interface{}) interface{}
 	for _, key := range keys {
 		wrapOrder(&valueFunctions, key)
+	}
+	// 兼容没有key的简单类型
+	if len(keys) == 0 {
+		valueFunctions = append(valueFunctions, func(i interface{}) interface{} {
+			return i
+		})
 	}
 	err = OrderBy(output, input, valueFunctions, orders)
 	return
