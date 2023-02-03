@@ -2,6 +2,7 @@ package lodash
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"reflect"
 	"strconv"
@@ -208,30 +209,29 @@ func Uniq(output interface{}, input interface{}) (err error) {
 		return err
 	}
 	if isChain {
-		result := []interface{}{}
+		// 利用map的key唯一，实现排重
+		uniqMaps := map[string]interface{}{}
 		for i := 0; i < inputRv.Len(); i++ {
-			isExist := false
-			if Includes(result, inputRv.Index(i).Interface()) {
-				isExist = true
-			}
-			if !isExist {
-				result = append(result, inputRv.Index(i).Interface())
-			}
+			uniqKey := fmt.Sprintf(`%+v`, inputRv.Index(i).Interface())
+			uniqMaps[uniqKey] = inputRv.Index(i).Interface()
 		}
-		input.(*lodash).input = result
+		uniqList := []interface{}{}
+		for _, v := range uniqMaps {
+			uniqList = append(uniqList, v)
+		}
+		input.(*lodash).input = uniqList
 	} else {
 		outputSet := reflect.ValueOf(output).Elem()
-		result := reflect.ValueOf(output).Elem()
+		uniqMaps := map[string]reflect.Value{}
 		for i := 0; i < inputRv.Len(); i++ {
-			isExist := false
-			if Includes(result.Interface(), inputRv.Index(i).Interface()) {
-				isExist = true
-			}
-			if !isExist {
-				result = reflect.Append(result, inputRv.Index(i))
-			}
+			uniqKey := fmt.Sprintf(`%+v`, inputRv.Index(i).Interface())
+			uniqMaps[uniqKey] = inputRv.Index(i)
 		}
-		outputSet.Set(result)
+		uniqList := reflect.ValueOf(output).Elem()
+		for _, v := range uniqMaps {
+			uniqList = reflect.Append(uniqList, v)
+		}
+		outputSet.Set(uniqList)
 	}
 	return nil
 }
@@ -246,34 +246,29 @@ func UniqBy(output interface{}, input interface{}, iteratee func(interface{}) in
 	}
 
 	if isChain {
-		result := []interface{}{}
+		// 利用map的key唯一，实现排重
+		uniqMaps := map[string]interface{}{}
 		for i := 0; i < inputRv.Len(); i++ {
-			isExist := false
-			for j := 0; j < len(result); j++ {
-				if reflect.DeepEqual(iteratee(result[j]), iteratee(inputRv.Index(i).Interface())) {
-					isExist = true
-				}
-			}
-			if !isExist {
-				result = append(result, inputRv.Index(i).Interface())
-			}
+			uniqKey := fmt.Sprintf(`%+v`, iteratee(inputRv.Index(i).Interface()))
+			uniqMaps[uniqKey] = inputRv.Index(i).Interface()
 		}
-		input.(*lodash).input = result
+		uniqList := []interface{}{}
+		for _, v := range uniqMaps {
+			uniqList = append(uniqList, v)
+		}
+		input.(*lodash).input = uniqList
 	} else {
 		outputSet := reflect.ValueOf(output).Elem()
-		result := reflect.ValueOf(output).Elem()
+		uniqMaps := map[string]reflect.Value{}
 		for i := 0; i < inputRv.Len(); i++ {
-			isExist := false
-			for j := 0; j < result.Len(); j++ {
-				if reflect.DeepEqual(iteratee(result.Index(j).Interface()), iteratee(inputRv.Index(i).Interface())) {
-					isExist = true
-				}
-			}
-			if !isExist {
-				result = reflect.Append(result, inputRv.Index(i))
-			}
+			uniqKey := fmt.Sprintf(`%+v`, iteratee(inputRv.Index(i).Interface()))
+			uniqMaps[uniqKey] = inputRv.Index(i)
 		}
-		outputSet.Set(result)
+		uniqList := reflect.ValueOf(output).Elem()
+		for _, v := range uniqMaps {
+			uniqList = reflect.Append(uniqList, v)
+		}
+		outputSet.Set(uniqList)
 	}
 	return nil
 }
